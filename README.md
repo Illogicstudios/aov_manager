@@ -49,16 +49,15 @@ Light can be removed from a light group and light group can be also removed
 
 <div align="center">
   <span>
-    <img src="https://user-images.githubusercontent.com/94440879/215746625-37be77f6-734d-4937-8d12-5dc5f3bbac12.png" width=50%>
+    <img src="https://user-images.githubusercontent.com/94440879/215767416-d0363cf1-6f8f-48e2-83fb-412bcb425d9e.png" width=50%>
   </span>
   <p weight="bold">AOV part with all the aov availables on the leftt</p>
   <br/>
 </div>
 
-
 <div align="center">
   <span>
-    <img src="https://user-images.githubusercontent.com/94440879/215746878-08dbfb80-4526-46fd-aed0-f44e131ecc9b.png" width=39%>
+    <img src="https://user-images.githubusercontent.com/94440879/215767171-592e6a6d-9b60-4d2b-a51a-1846c777ce1c.png" width=39%>
   </span>
   <span>
     <img src="https://user-images.githubusercontent.com/94440879/215746997-9bc0fb18-a6c2-467f-bc90-c8c1428614df.png" width=59%>
@@ -67,12 +66,9 @@ Light can be removed from a light group and light group can be also removed
   <br/>
 </div>
 
-
 In this part available AOVs are on the left and activated ones are on the right. The 2 buttons with arrows can be clicked to toggle the activation of selected AOVs. When AOVs are activated, they can be selected in the Arnold RenderView.
 
-
-
-
+The button "Update Drivers" update the properties of the "defaultArnoldDriver" and another driver "aov_full_driver" that is used on AOV with full precision
 
 
 
