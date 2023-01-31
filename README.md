@@ -63,7 +63,7 @@ Light can be removed from a light group and light group can be also removed
   <span>
     <img src="https://user-images.githubusercontent.com/94440879/215746997-9bc0fb18-a6c2-467f-bc90-c8c1428614df.png" width=59%>
   </span>
-  <p weight="bold">Light group AOVs and N AOV have been activated and the green and blue light light group AOV is selected</p>
+  <p weight="bold">Light group AOVs and N AOV have been activated and the green and blue lights light group AOV is selected</p>
   <br/>
 </div>
 
