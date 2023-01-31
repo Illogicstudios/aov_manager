@@ -12,6 +12,6 @@ if __name__ == '__main__':
     from AOVManager import *
     from utils import *
 
-    unload_packages(silent=True, packages=["AOVManager"])
+    unload_packages(silent=True, packages=["AOVManager", "AOV"])
     ltp = AOVManager()
     ltp.show()
