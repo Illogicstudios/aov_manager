@@ -92,6 +92,31 @@ class AOVManager(QDialog):
         OpenMaya.MMessage.removeCallback(self.__selection_callback)
         OpenMaya.MMessage.removeCallback(self.__dag_callback)
 
+    # Update the properties of the drivers
+    @staticmethod
+    def __update_drivers():
+        if objExists("aov_full_driver"):
+            full_driver = ls("aov_full_driver", type="aiAOVDriver")[0]
+        else:
+            full_driver = createNode('aiAOVDriver', name="aov_full_driver")
+        full_driver.halfPrecision.set(0)
+        full_driver.mergeAOVs.set(1)
+        full_driver.multipart.set(1)
+        full_driver.prefix.set("<RenderLayer>/<Scene>/<Scene>_utility")
+
+        if objExists("defaultArnoldDriver"):
+            half_driver = ls("defaultArnoldDriver", type="aiAOVDriver")[0]
+        else:
+            half_driver = createNode('aiAOVDriver', name="defaultArnoldDriver")
+
+        half_driver.exrCompression.set(9)
+        half_driver.mergeAOVs.set(1)
+        half_driver.multipart.set(1)
+        half_driver.halfPrecision.set(1)
+
+        if objExists("defaultRenderGlobals"):
+            ls("defaultRenderGlobals")[0].imageFilePrefix.set("<RenderLayer>/<Scene>/<Scene>")
+
     # Get all the lights in the scene
     @staticmethod
     def __get_all_lights():
@@ -178,9 +203,7 @@ class AOVManager(QDialog):
         # ################################################## Tabs ######################################################
 
         # Layout Tab 1 : AOVs
-        aovs_lyt = QGridLayout()
-        aovs_lyt.setColumnStretch(0, 1)
-        aovs_lyt.setColumnStretch(1, 1)
+        aovs_lyt = QVBoxLayout()
         aov_widget = QWidget()
         aov_widget.setLayout(aovs_lyt)
         tab_widget.addTab(aov_widget, "AOVs")
@@ -195,39 +218,46 @@ class AOVManager(QDialog):
 
         # ############################################# Tab 1 : AOVs ###################################################
 
-        # Widget ML.1.1 : Available AOVs
+
+        # Widget ML.1.1 : Update Drivers
+        update_drivers_btn = QPushButton("Update Drivers")
+        update_drivers_btn.clicked.connect(AOVManager.__update_drivers)
+        aovs_lyt.addWidget(update_drivers_btn)
+
+        # Layout ML.1.2 : AOVs
+        aovs_grid = QGridLayout()
+        aovs_grid.setColumnStretch(0, 1)
+        aovs_grid.setColumnStretch(1, 1)
+        aovs_lyt.addLayout(aovs_grid)
+
+        # Widget ML.1.2.1 : Available AOVs
         available_aovs_title = QLabel("Available AOVs")
         available_aovs_title.setAlignment(Qt.AlignCenter)
-        aovs_lyt.addWidget(available_aovs_title, 0, 0)
-        # Widget ML.1.2 : Active AOVs
+        aovs_grid.addWidget(available_aovs_title, 0, 0)
+        # Widget ML.1.2.2 : Active AOVs
         active_aovs = QLabel("Active AOVs")
         active_aovs.setAlignment(Qt.AlignCenter)
-        aovs_lyt.addWidget(active_aovs, 0, 1)
+        aovs_grid.addWidget(active_aovs, 0, 1)
 
-        # Widget ML.1.3 : List Available AOVs
+        # Widget ML.1.2.3 : List Available AOVs
         self.__ui_list_available_aovs_view = QListWidget()
         self.__ui_list_available_aovs_view.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.__ui_list_available_aovs_view.itemSelectionChanged.connect(self.__on_selection_available_aovs_changed)
-        aovs_lyt.addWidget(self.__ui_list_available_aovs_view, 1, 0)
-        # Widget ML.1.4 : List Active AOVs
+        aovs_grid.addWidget(self.__ui_list_available_aovs_view, 1, 0)
+        # Widget ML.1.2.4 : List Active AOVs
         self.__ui_list_active_aovs_view = QListWidget()
         self.__ui_list_active_aovs_view.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.__ui_list_active_aovs_view.itemSelectionChanged.connect(self.__on_selection_active_aovs_changed)
-        aovs_lyt.addWidget(self.__ui_list_active_aovs_view, 1, 1)
+        aovs_grid.addWidget(self.__ui_list_active_aovs_view, 1, 1)
 
-        # Widget ML.1.5 : Add AOV to active
+        # Widget ML.1.2.5 : Add AOV to active
         self.__ui_add_aov_to_active_btn = QPushButton(">>>")
         self.__ui_add_aov_to_active_btn.clicked.connect(partial(self.__add_aovs_to_active))
-        aovs_lyt.addWidget(self.__ui_add_aov_to_active_btn, 2, 0)
-        # Widget ML.1.6: Remove AOV from Active
+        aovs_grid.addWidget(self.__ui_add_aov_to_active_btn, 2, 0)
+        # Widget ML.1.2.6: Remove AOV from Active
         self.__ui_remove_aov_to_active_btn = QPushButton("<<<")
         self.__ui_remove_aov_to_active_btn.clicked.connect(self.__remove_selected_aovs_from_active)
-        aovs_lyt.addWidget(self.__ui_remove_aov_to_active_btn, 2, 1)
-
-        # Widget ML.1.6 : Fix name prefix checkbox
-        fix_name_prefix_checkbox = QCheckBox("Fix name prefix \n<RenderLayout>/<Scene>/<Scene>")
-        fix_name_prefix_checkbox.setChecked(True)
-        aovs_lyt.addWidget(fix_name_prefix_checkbox, 3, 0)
+        aovs_grid.addWidget(self.__ui_remove_aov_to_active_btn, 2, 1)
 
         # ########################################## Tab 2 : Light Groups ##############################################
 
@@ -571,24 +601,9 @@ class AOVManager(QDialog):
         if selection_available_aovs is None:
             selection_available_aovs = self.__available_aovs_selected
 
-        if objExists("aov_full_driver"):
-            full_driver = ls("aov_full_driver", type="aiAOVDriver")[0]
-        else:
-            full_driver = createNode('aiAOVDriver', name="aov_full_driver")
-        full_driver.halfPrecision.set(0)
-        full_driver.mergeAOVs.set(1)
-        full_driver.multipart.set(1)
-        full_driver.prefix.set("<RenderLayer>/<Scene>/<Scene>_utility")
-
-        if objExists("defaultArnoldDriver"):
-            half_driver = ls("defaultArnoldDriver", type="aiAOVDriver")[0]
-        else:
-            half_driver = createNode('aiAOVDriver', name="defaultArnoldDriver")
-
-        half_driver.exrCompression.set(9)
-        half_driver.mergeAOVs.set(1)
-        half_driver.multipart.set(1)
-        half_driver.halfPrecision.set(1)
+        AOVManager.__update_drivers()
+        full_driver = ls("aov_full_driver", type="aiAOVDriver")[0]
+        half_driver = ls("defaultArnoldDriver", type="aiAOVDriver")[0]
 
         for aov in selection_available_aovs:
             aov.create_aov(half_driver, full_driver)
