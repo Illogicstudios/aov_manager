@@ -320,9 +320,9 @@ class AOVManager(QDialog):
         self.__ui_add_selected_light_to_lg_btn.clicked.connect(self.__add_lights_to_light_group)
         lights_lyt.addWidget(self.__ui_add_selected_light_to_lg_btn, 2, 0)
         # Widget ML.2.6: Create a light group by light button
-        create_lg_by_light_btn = QPushButton("Create a light group by light")
-        create_lg_by_light_btn.clicked.connect(self.__create_light_group_by_light)
-        lights_lyt.addWidget(create_lg_by_light_btn, 3, 0)
+        self.__ui_create_lg_by_light_btn = QPushButton("Create a light group by light")
+        self.__ui_create_lg_by_light_btn.clicked.connect(self.__create_light_group_by_light)
+        lights_lyt.addWidget(self.__ui_create_lg_by_light_btn, 3, 0)
 
         # Widget ML.2.7 : Remove light or a light group button
         self.__ui_remove_selection_lg = QPushButton("Remove Selection")
@@ -460,6 +460,8 @@ class AOVManager(QDialog):
             ((self.__selection_lg is not None and self.__selection_lg_light is None) or
              len(self.__lights_selected) > 0))
 
+        self.__ui_create_lg_by_light_btn.setEnabled(len(self.__lights_selected)>0)
+
         self.__ui_add_selected_light_to_lg_btn.setEnabled(
             len(self.__lights_selected) > 0 and self.__selection_lg is not None)
         self.__ui_remove_selection_lg.setEnabled(
@@ -568,7 +570,7 @@ class AOVManager(QDialog):
     # Create a light group by light
     def __create_light_group_by_light(self):
         undoInfo(openChunk=True)
-        lights = self.__get_all_lights()
+        lights = self.__lights_selected
         for light in lights:
             light = light.getTransform()
             self.__submit_light_group([light], light.name())
