@@ -150,7 +150,7 @@ class AOVManager(QDialog):
         for aov_name, aov in unfiltered_active_aovs:
             name = aov_name.strip("RGBA_")
             if "RGBA_" in aov_name:
-                light_lg = ls(type=["light"] + listNodeTypes("light"), dag=True)
+                light_lg = self.__get_all_lights()
                 found = False
                 for light in light_lg:
                     if light.aiAov.get() == name:
