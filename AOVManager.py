@@ -644,6 +644,9 @@ class AOVManager(QDialog):
         full_driver = ls("aov_full_driver", type="aiAOVDriver")[0]
         half_driver = ls("defaultArnoldDriver", type="aiAOVDriver")[0]
 
+        lockNode('initialShadingGroup', lock=False, lu=False)
+        lockNode('initialParticleSE', lock=False, lu=False)
+
         for aov in selection_available_aovs:
             aov.create_aov(half_driver, full_driver)
 
