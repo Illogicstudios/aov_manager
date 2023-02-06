@@ -187,9 +187,7 @@ class AOVManager(QDialog):
         self.__light_groups = {}
         for light in lights:
 
-            print(light.type())
             aov_light_group = light.aiAov.get()
-            print("b")
             if "default" not in aov_light_group:
                 if aov_light_group not in self.__light_groups:
                     self.__light_groups[aov_light_group] = []
