@@ -136,7 +136,7 @@ class AOVManager(QDialog):
     # Get all the lights in the scene
     @staticmethod
     def __get_all_lights():
-        return ls(type=["light"] + listNodeTypes("light"), dag=True)
+        return [light for light in ls(type=["light"] + listNodeTypes("light"), dag=True) if light.type() != "aiLightDecay"]
 
     # Retrieve all the available aovs and the active ones.
     def __retrieve_aovs(self):
@@ -186,7 +186,10 @@ class AOVManager(QDialog):
         lights = AOVManager.__get_all_lights()
         self.__light_groups = {}
         for light in lights:
+
+            print(light.type())
             aov_light_group = light.aiAov.get()
+            print("b")
             if "default" not in aov_light_group:
                 if aov_light_group not in self.__light_groups:
                     self.__light_groups[aov_light_group] = []
