@@ -136,7 +136,13 @@ class AOVManager(QDialog):
     # Get all the lights in the scene
     @staticmethod
     def __get_all_lights():
-        return [light for light in ls(type=["light"] + listNodeTypes("light"), dag=True) if light.type() != "aiLightDecay"]
+        return [light for light in ls(type=["light"] + listNodeTypes("light"), dag=True) if
+                light.type() != "aiLightDecay"]
+
+    # Check if a name is correct for a light group
+    @staticmethod
+    def __check_name_light_group(name):
+        return re.match(r"^[a-zA-Z][a-zA-Z0-9_]*$", name) is not None
 
     # Retrieve all the available aovs and the active ones.
     def __retrieve_aovs(self):
@@ -234,7 +240,6 @@ class AOVManager(QDialog):
         tab_widget.addTab(light_widget, "Light Groups")
 
         # ############################################# Tab 1 : AOVs ###################################################
-
 
         # Widget ML.1.1 : Update Drivers
         update_drivers_btn = QPushButton("Update Drivers")
@@ -457,11 +462,11 @@ class AOVManager(QDialog):
     # Refresh the buttons
     def __refresh_lg_btn(self):
         self.__ui_lg_submit_btn.setEnabled(
-            len(self.__ui_lg_name_edit.text()) > 0 and
+            self.__check_name_light_group(self.__ui_lg_name_edit.text()) and
             ((self.__selection_lg is not None and self.__selection_lg_light is None) or
              len(self.__lights_selected) > 0))
 
-        self.__ui_create_lg_by_light_btn.setEnabled(len(self.__lights_selected)>0)
+        self.__ui_create_lg_by_light_btn.setEnabled(len(self.__lights_selected) > 0)
 
         self.__ui_add_selected_light_to_lg_btn.setEnabled(
             len(self.__lights_selected) > 0 and self.__selection_lg is not None)
@@ -519,7 +524,6 @@ class AOVManager(QDialog):
             self.__available_aovs_selected.append(item.data(Qt.UserRole))
         self.__refresh_aov_btn()
 
-
     # Update the active AOVs selected
     def __on_selection_active_aovs_changed(self):
         self.__active_aovs_selected = []
@@ -527,47 +531,47 @@ class AOVManager(QDialog):
             self.__active_aovs_selected.append(item.data(Qt.UserRole))
         self.__refresh_aov_btn()
 
-
     # Create a new light group or rename a existant one
     def __submit_light_group(self, lights=None, name=None):
-        undoInfo(openChunk=True)
         if name is None:
             name = self.__ui_lg_name_edit.text()
+            
+        if self.__check_name_light_group(name):
+            undoInfo(openChunk=True)
+            if self.__selection_lg is not None and self.__selection_lg_light is None:
+                lights = self.__get_all_lights()
+                for light in lights:
+                    if light.aiAov.get() == self.__selection_lg:
+                        light.aiAov.set(name)
 
-        if self.__selection_lg is not None and self.__selection_lg_light is None:
-            lights = self.__get_all_lights()
-            for light in lights:
-                if light.aiAov.get() == self.__selection_lg:
-                    light.aiAov.set(name)
+                name_lg = "aiAOV_RGBA_" + self.__selection_lg
 
-            name_lg = "aiAOV_RGBA_" + self.__selection_lg
-            print (name, name_lg,"aiAOV_RGBA_" + name)
-            if objExists(name_lg):
-                delete(ls(name_lg)[0])
-                name_aov = "RGBA_" + name
-                self.__add_aovs_to_active([LightGroupAOV(name_aov, LIGHT_GROUP_AOVS_ORDER_GROUP)])
-        else:
-            if lights is None:
-                lights = self.__lights_selected
+                if objExists(name_lg):
+                    delete(ls(name_lg)[0])
+                    name_aov = "RGBA_" + name
+                    self.__add_aovs_to_active([LightGroupAOV(name_aov, LIGHT_GROUP_AOVS_ORDER_GROUP)])
+            else:
+                if lights is None:
+                    lights = self.__lights_selected
 
-            lights_filtered = []
+                lights_filtered = []
 
-            for light in lights:
-                if "default" in light.aiAov.get():
-                    lights_filtered.append(light)
+                for light in lights:
+                    if "default" in light.aiAov.get():
+                        lights_filtered.append(light)
 
-            self.__add_lights_to_light_group(lights_filtered, "RGBA_" + name)
+                self.__add_lights_to_light_group(lights_filtered, "RGBA_" + name)
 
-        self.__retrieve_light_groups()
-        self.__retrieve_aovs()
-        self.__name_light_group_default = True
-        self.__refresh_light_group_name()
-        self.__refresh_light_group_list()
-        self.__refresh_lights_list()
-        self.__refresh_available_aovs_list()
-        self.__refresh_active_aovs_list()
-        self.__refresh_lg_btn()
-        undoInfo(closeChunk=True)
+            self.__retrieve_light_groups()
+            self.__retrieve_aovs()
+            self.__name_light_group_default = True
+            self.__refresh_light_group_name()
+            self.__refresh_light_group_list()
+            self.__refresh_lights_list()
+            self.__refresh_available_aovs_list()
+            self.__refresh_active_aovs_list()
+            self.__refresh_lg_btn()
+            undoInfo(closeChunk=True)
 
     # Create a light group by light
     def __create_light_group_by_light(self):
