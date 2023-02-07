@@ -143,12 +143,12 @@ class AOVManager(QDialog):
         aov_possible_keys = list(AOVS.keys()) + \
                             [aov for aov in list(self.__light_groups)]
 
-        unfiltered_active_aovs = [(aov.name().strip("aiAOV_"), aov) for aov in ls(type="aiAOV")]
+        unfiltered_active_aovs = [(re.sub("aiAOV_", '', aov.name()), aov) for aov in ls(type="aiAOV")]
 
         # Active AOVs
         self.__active_aovs = []
         for aov_name, aov in unfiltered_active_aovs:
-            name = aov_name.strip("RGBA_")
+            name = re.sub("RGBA_", '', aov_name)
             if "RGBA_" in aov_name:
                 light_lg = self.__get_all_lights()
                 found = False
@@ -163,7 +163,7 @@ class AOVManager(QDialog):
             if name in aov_possible_keys:
                 self.__active_aovs.append((aov_name, aov))
 
-        active_aov_name = [aov[0].strip("RGBA_") for aov in self.__active_aovs]
+        active_aov_name = [re.sub("RGBA_", '', aov[0]) for aov in self.__active_aovs]
 
         # Available AOVs
         self.__available_aovs = {}
@@ -541,9 +541,10 @@ class AOVManager(QDialog):
                     light.aiAov.set(name)
 
             name_lg = "aiAOV_RGBA_" + self.__selection_lg
+            print (name, name_lg,"aiAOV_RGBA_" + name)
             if objExists(name_lg):
                 delete(ls(name_lg)[0])
-                name_aov = "aiAOV_RGBA_" + name
+                name_aov = "RGBA_" + name
                 self.__add_aovs_to_active([LightGroupAOV(name_aov, LIGHT_GROUP_AOVS_ORDER_GROUP)])
         else:
             if lights is None:
@@ -602,7 +603,7 @@ class AOVManager(QDialog):
             light_group = self.__selection_lg
 
         for light in lights:
-            light.aiAov.set(light_group.strip("RGBA_"))
+            light.aiAov.set(re.sub("RGBA_", '', light_group))
 
         self.__retrieve_light_groups()
         self.__retrieve_aovs()
