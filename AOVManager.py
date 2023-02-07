@@ -137,7 +137,7 @@ class AOVManager(QDialog):
     @staticmethod
     def __get_all_lights():
         return [light for light in ls(type=["light"] + listNodeTypes("light"), dag=True) if
-                light.type() != "aiLightDecay"]
+                light.type() != "aiLightDecay" and light.type() != "aiGobo"]
 
     # Check if a name is correct for a light group
     @staticmethod
@@ -404,26 +404,7 @@ class AOVManager(QDialog):
             self.__ui_lg_submit_btn.setText("Create light group with selected lights")
             if self.__name_light_group_default:
                 if len(self.__lights_selected) > 0:
-                    name = self.__lights_selected[0].name()
-                    while "RGBA_" + name in self.__light_groups.keys():
-                        if not name[-1].isdigit():
-                            name += '1'
-                        elif name[-1] == '9':
-                            new_name = ""
-                            len_name = len(name)
-                            for i in range(len_name):
-                                if i != len_name - 1:
-                                    new_name += name[i]
-                            new_name += '1'
-                            name = new_name
-                        else:
-                            new_name = ""
-                            len_name = len(name)
-                            for i in range(len_name):
-                                if i != len_name - 1:
-                                    new_name += name[i]
-                            new_name += str(int(name[-1]) + 1)
-                            name = new_name
+                    name = self.__lights_selected[0].name().replace("|","_")
                     self.__ui_lg_name_edit.setText(name)
                 else:
                     self.__ui_lg_name_edit.setText("")
@@ -535,7 +516,9 @@ class AOVManager(QDialog):
     def __submit_light_group(self, lights=None, name=None):
         if name is None:
             name = self.__ui_lg_name_edit.text()
-            
+
+        name = name.replace("|","_")
+
         if self.__check_name_light_group(name):
             undoInfo(openChunk=True)
             if self.__selection_lg is not None and self.__selection_lg_light is None:
@@ -560,7 +543,9 @@ class AOVManager(QDialog):
                     if "default" in light.aiAov.get():
                         lights_filtered.append(light)
 
-                self.__add_lights_to_light_group(lights_filtered, "RGBA_" + name)
+                name_aov = "RGBA_" + name
+                self.__add_lights_to_light_group(lights_filtered, name_aov)
+                self.__add_aovs_to_active([LightGroupAOV(name_aov, LIGHT_GROUP_AOVS_ORDER_GROUP)])
 
             self.__retrieve_light_groups()
             self.__retrieve_aovs()
