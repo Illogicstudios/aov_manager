@@ -1,5 +1,4 @@
 import sys
-import utils
 
 if __name__ == '__main__':
     # TODO put right directory
@@ -13,5 +12,10 @@ if __name__ == '__main__':
     from utils import *
 
     unload_packages(silent=True, packages=["AOVManager", "AOV", "Prefs"])
+
+    try:
+        app.close()
+    except:
+        pass
     app = AOVManager()
     app.show()
