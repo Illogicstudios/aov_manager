@@ -107,14 +107,10 @@ class AOVManager(QDialog):
 
     # Retrieve preferences
     def __retrieve_prefs(self):
-        if "window_size" in self.__prefs:
-            size = self.__prefs["window_size"]
-            self.__ui_width = size["width"]
-            self.__ui_height = size["height"]
-
         if "window_pos" in self.__prefs:
             pos = self.__prefs["window_pos"]
             self.__ui_pos = QPoint(pos["x"],pos["y"])
+            
     def test_arnold_renderer(self):
         arnold_renderer_loaded = objExists("defaultArnoldDriver")
         if not arnold_renderer_loaded:
