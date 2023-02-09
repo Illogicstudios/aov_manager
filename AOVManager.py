@@ -104,7 +104,7 @@ class AOVManager(QDialog):
             OpenMaya.MEventMessage.addEventCallback("DagObjectCreated", self.__on_dag_changed)
 
     # Remove callbacks
-    def closeEvent(self, arg__1: QtGui.QCloseEvent) -> None:
+    def hideEvent(self, arg__1: QtGui.QCloseEvent) -> None:
         OpenMaya.MMessage.removeCallback(self.__selection_callback)
         OpenMaya.MMessage.removeCallback(self.__dag_callback)
 
