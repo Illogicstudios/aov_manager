@@ -20,8 +20,11 @@ import utils
 import maya.OpenMaya as OpenMaya
 
 from AOV import *
+from Prefs import *
 
 ########################################################################################################################
+
+_FILE_NAME_PREFS = "aov_manager"
 
 # Available AOVs are sorted and ordered in groups. The higher the group number, the higher it will be in the list
 LIGHT_GROUP_AOVS_ORDER_GROUP = 1
@@ -52,6 +55,11 @@ class AOVManager(QDialog):
     def __init__(self, prnt=wrapInstance(int(omui.MQtUtil.mainWindow()), QWidget)):
         super(AOVManager, self).__init__(prnt)
 
+        # Common Preferences (common preferences on all tools)
+        self.__common_prefs = Prefs()
+        # Preferences for this tool
+        self.__prefs = Prefs(_FILE_NAME_PREFS)
+
         # Model attributes
         # for Light Groups part
         self.__lights_selected = []
@@ -66,7 +74,13 @@ class AOVManager(QDialog):
         self.__available_aovs_selected = []
 
         # UI attributes
-        self.__reinit_ui()
+        self.__ui_width = 600
+        self.__ui_height = 500
+        self.__ui_min_width = 400
+        self.__ui_min_height = 300
+        self.__ui_pos = QDesktopWidget().availableGeometry().center() - QPoint(self.__ui_width,self.__ui_height)/2
+
+        self.__retrieve_prefs()
 
         # name the window
         self.setWindowTitle("AOV Manager")
@@ -84,6 +98,23 @@ class AOVManager(QDialog):
         else:
             self.close()
 
+    # Save preferences
+    def __save_prefs(self):
+        size = self.size()
+        self.__prefs["window_size"] = {"width": size.width(), "height": size.height()}
+        pos = self.pos()
+        self.__prefs["window_pos"] = {"x": pos.x(), "y": pos.y()}
+
+    # Retrieve preferences
+    def __retrieve_prefs(self):
+        if "window_size" in self.__prefs:
+            size = self.__prefs["window_size"]
+            self.__ui_width = size["width"]
+            self.__ui_height = size["height"]
+
+        if "window_pos" in self.__prefs:
+            pos = self.__prefs["window_pos"]
+            self.__ui_pos = QPoint(pos["x"],pos["y"])
     def test_arnold_renderer(self):
         arnold_renderer_loaded = objExists("defaultArnoldDriver")
         if not arnold_renderer_loaded:
@@ -107,6 +138,7 @@ class AOVManager(QDialog):
     def hideEvent(self, arg__1: QtGui.QCloseEvent) -> None:
         OpenMaya.MMessage.removeCallback(self.__selection_callback)
         OpenMaya.MMessage.removeCallback(self.__dag_callback)
+        self.__save_prefs()
 
     # Update the properties of the drivers
     @staticmethod
@@ -199,20 +231,13 @@ class AOVManager(QDialog):
                     self.__light_groups[aov_light_group] = []
                 self.__light_groups[aov_light_group].append(light)
 
-    # initialize the ui
-    def __reinit_ui(self):
-        self.__ui_width = 600
-        self.__ui_height = 500
-        self.__ui_min_width = 400
-        self.__ui_min_height = 300
 
     # Create the ui
     def __create_ui(self):
         # Reinit attributes of the UI
-        self.__reinit_ui()
         self.setMinimumSize(self.__ui_min_width, self.__ui_min_height)
         self.resize(self.__ui_width, self.__ui_height)
-        self.move(QDesktopWidget().availableGeometry().center() - self.frameGeometry().center())
+        self.move(self.__ui_pos)
 
         # asset_path = os.path.dirname(__file__) + "/assets/asset.png"
 
