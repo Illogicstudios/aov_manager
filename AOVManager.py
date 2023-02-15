@@ -165,7 +165,7 @@ class AOVManager(QDialog):
     @staticmethod
     def __get_all_lights():
         return [light for light in ls(type=["light"] + listNodeTypes("light"), dag=True) if
-                light.type() not in ["aiLightDecay","aiGobo","lightEditor","lightItem"]]
+                light.type() not in ["aiLightDecay","aiGobo","aiLightBlocker","lightEditor","lightItem"]]
 
     # Check if a name is correct for a light group
     @staticmethod
