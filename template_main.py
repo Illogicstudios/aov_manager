@@ -11,11 +11,11 @@ if __name__ == '__main__':
     from AOVManager import *
     from utils import *
 
-    unload_packages(silent=True, packages=["AOVManager", "AOV", "Prefs"])
+    unload_packages(silent=True, packages=["AOVManager", "AOV"])
 
     try:
-        app.close()
+        aov_manager.close()
     except:
         pass
-    app = AOVManager()
-    app.show()
+    aov_manager = AOVManager()
+    aov_manager.show()
