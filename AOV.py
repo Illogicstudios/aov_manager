@@ -27,6 +27,7 @@ class AOV(ABC):
         elif self.__precision == PrecisionMode.Halfprecision:
             connectAttr(half_driver.name() + ".message", "aiAOV_" + aov.name + ".outputs[0].driver", f=True)
         else:
+            connectAttr(full_driver.name() + ".message", "aiAOV_" + aov.name + ".outputs[0].driver", f=True)
             connectAttr(half_driver.name() + ".message", "aiAOV_" + aov.name + ".outputs[1].filter", f=True)
             connectAttr(full_driver.name() + ".message", "aiAOV_" + aov.name + ".outputs[1].driver", f=True)
         return aov
