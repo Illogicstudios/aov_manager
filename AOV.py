@@ -28,8 +28,12 @@ class AOV(ABC):
             connectAttr(half_driver.name() + ".message", "aiAOV_" + aov.name + ".outputs[0].driver", f=True)
         else:
             connectAttr(full_driver.name() + ".message", "aiAOV_" + aov.name + ".outputs[0].driver", f=True)
-            connectAttr(half_driver.name() + ".message", "aiAOV_" + aov.name + ".outputs[1].filter", f=True)
             connectAttr(full_driver.name() + ".message", "aiAOV_" + aov.name + ".outputs[1].driver", f=True)
+            connectAttr("defaultArnoldFilter.message", "aiAOV_" + aov.name +'.outputs[0].filter', f=True)
+            closest_filter = createNode("aiAOVFilter")
+            closest_filter.aiTranslator.set("closest")
+            connectAttr(closest_filter+".message", "aiAOV_" + aov.name +'.outputs[1].filter', f=True)
+
         return aov
 
 
