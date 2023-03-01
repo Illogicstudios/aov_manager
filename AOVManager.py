@@ -15,11 +15,12 @@ from PySide2.QtCore import *
 
 from shiboken2 import wrapInstance
 
-import utils
+from utils import *
 
 import maya.OpenMaya as OpenMaya
 
 from AOV import *
+from AOVBehavior import *
 from Prefs import *
 
 ########################################################################################################################
@@ -27,24 +28,57 @@ from Prefs import *
 _FILE_NAME_PREFS = "aov_manager"
 
 # Available AOVs are sorted and ordered in groups. The higher the group number, the higher it will be in the list
-LIGHT_GROUP_AOVS_ORDER_GROUP = 1
+FIRST_AOV_ORDER_GROUP = 100
+LIGHT_GROUP_AOVS_ORDER_GROUP = 80
+SECOND_AOV_ORDER_GROUP = 60
+THIRD_AOV_ORDER_GROUP = 40
 AOVS = {
-    "N": DefaultAOV("N", 2, PrecisionMode.FullPrecision),
-    "P": DefaultAOV("P", 2, PrecisionMode.FullPrecision),
-    "Z": DefaultAOV("Z", 2, PrecisionMode.FullAndHalfPrecision),
-    "volume": DefaultAOV("volume", 2),
-    "emission": DefaultAOV("emission", 2),
-    "crypto_asset": CryptomatteAOV("crypto_asset", 2),
-    "crypto_material": CryptomatteAOV("crypto_material", 2),
-    "crypto_object": CryptomatteAOV("crypto_object", 2),
-    "uv": UVAOV("uv", 2),
-    "sheen": DefaultAOV("sheen", 0),
-    "specular": DefaultAOV("specular", 0),
-    "transmission": DefaultAOV("transmission", 0),
-    "sss": DefaultAOV("sss", 0),
-    "coat": DefaultAOV("coat", 0),
-    "occlusion": OcclusionAOV("occlusion", 0),
-    "motionVectorBlur": MotionVectorBlurAOV("motionVectorBlur", 0),
+    "N": DefaultAOV(
+        "N", FIRST_AOV_ORDER_GROUP, [FullPrecisionBehavior()]),
+    "P": DefaultAOV(
+        "P", FIRST_AOV_ORDER_GROUP, [FullPrecisionBehavior()]),
+    "Z": DefaultAOV(
+        "Z", FIRST_AOV_ORDER_GROUP, [ClosestGaussianBehavior()]),
+    "volume": DefaultAOV(
+        "volume", FIRST_AOV_ORDER_GROUP, [HalfPrecisionBehavior()]),
+    "emission": DefaultAOV(
+        "emission", FIRST_AOV_ORDER_GROUP, [HalfPrecisionBehavior()]),
+    "crypto_asset": CryptomatteAOV(
+        "crypto_asset", FIRST_AOV_ORDER_GROUP),
+    "crypto_material": CryptomatteAOV(
+        "crypto_material", FIRST_AOV_ORDER_GROUP),
+    "crypto_object": CryptomatteAOV(
+        "crypto_object", FIRST_AOV_ORDER_GROUP),
+    "uv": UVAOV(
+        "uv", FIRST_AOV_ORDER_GROUP),
+    "sheen": DefaultAOV(
+        "sheen", SECOND_AOV_ORDER_GROUP, [HalfPrecisionBehavior(), AOVVarianceBehavior()]),
+    "specular": DefaultAOV(
+        "specular", SECOND_AOV_ORDER_GROUP, [HalfPrecisionBehavior(), AOVVarianceBehavior()]),
+    "transmission": DefaultAOV(
+        "transmission", SECOND_AOV_ORDER_GROUP, [HalfPrecisionBehavior(), AOVVarianceBehavior()]),
+    "sss": DefaultAOV(
+        "sss", SECOND_AOV_ORDER_GROUP, [HalfPrecisionBehavior(), AOVVarianceBehavior()]),
+    "coat": DefaultAOV(
+        "coat", SECOND_AOV_ORDER_GROUP, [HalfPrecisionBehavior(), AOVVarianceBehavior()]),
+    "occlusion": OcclusionAOV(
+        "occlusion", SECOND_AOV_ORDER_GROUP),
+    "motionVectorBlur": MotionVectorBlurAOV(
+        "motionVectorBlur", SECOND_AOV_ORDER_GROUP),
+    "direct": DefaultAOV(
+        "direct", THIRD_AOV_ORDER_GROUP, [HalfPrecisionBehavior(), AOVVarianceBehavior()]),
+    "indirect": DefaultAOV(
+        "indirect", THIRD_AOV_ORDER_GROUP, [HalfPrecisionBehavior(), AOVVarianceBehavior()]),
+    "specular_direct": DefaultAOV(
+        "specular_direct", THIRD_AOV_ORDER_GROUP, [HalfPrecisionBehavior(), AOVVarianceBehavior()]),
+    "specular_indirect": DefaultAOV(
+        "specular_indirect", THIRD_AOV_ORDER_GROUP, [HalfPrecisionBehavior(), AOVVarianceBehavior()]),
+    "diffuse": DefaultAOV(
+        "diffuse", THIRD_AOV_ORDER_GROUP, [HalfPrecisionBehavior(), AOVVarianceBehavior()]),
+    "diffuse_direct": DefaultAOV(
+        "diffuse_direct", THIRD_AOV_ORDER_GROUP, [HalfPrecisionBehavior(), AOVVarianceBehavior()]),
+    "diffuse_indirect": DefaultAOV(
+        "diffuse_indirect", THIRD_AOV_ORDER_GROUP, [HalfPrecisionBehavior(), AOVVarianceBehavior()]),
 }
 
 
@@ -68,6 +102,7 @@ class AOVManager(QDialog):
         self.__selection_lg = None
         self.__selection_lg_light = None
         # For Aovs Part
+        self.__output_denoising = False
         self.__active_aovs = []
         self.__available_aovs = {}
         self.__active_aovs_selected = []
@@ -89,14 +124,14 @@ class AOVManager(QDialog):
         # Makes the object get deleted from memory, not just hidden, when it is closed.
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
 
-        self.__create_callback()
-
         if self.test_arnold_renderer():
             # Create the layout, linking it to actions and refresh the display
             self.__create_ui()
             self.__refresh_ui()
+            self.__create_callback()
         else:
             self.close()
+
 
     # Save preferences
     def __save_prefs(self):
@@ -130,15 +165,32 @@ class AOVManager(QDialog):
         self.__dag_callback = \
             OpenMaya.MEventMessage.addEventCallback("DagObjectCreated", self.__on_dag_changed)
 
-    # Remove callbacks
-    def hideEvent(self, arg__1: QtGui.QCloseEvent) -> None:
+    # Create callbacks when DAG changes and the selection changes
+    def __remove_callback(self):
         OpenMaya.MMessage.removeCallback(self.__selection_callback)
         OpenMaya.MMessage.removeCallback(self.__dag_callback)
+
+    # Add callback
+    # def showEvent(self, arg__1: QtGui.QShowEvent) -> None:
+    #     self.__create_callback()
+
+    # Remove callbacks
+    def hideEvent(self, arg__1: QtGui.QCloseEvent) -> None:
+        self.__remove_callback()
         self.__save_prefs()
 
     # Update the properties of the drivers
-    @staticmethod
-    def __update_drivers():
+    def __update_drivers(self):
+        # Variance Driver
+        if objExists("variance_driver"):
+            variance_driver = ls("variance_driver", type="aiAOVDriver")[0]
+        else:
+            variance_driver = createNode('aiAOVDriver', name="variance_driver")
+        variance_driver.halfPrecision.set(1)
+        variance_driver.mergeAOVs.set(1)
+        variance_driver.prefix.set("<RenderLayer>/<Scene>/variance_<Scene>")
+
+        # Full Driver
         if objExists("aov_full_driver"):
             full_driver = ls("aov_full_driver", type="aiAOVDriver")[0]
         else:
@@ -148,6 +200,7 @@ class AOVManager(QDialog):
         full_driver.multipart.set(1)
         full_driver.prefix.set("<RenderLayer>/<Scene>/<Scene>_utility")
 
+        # Half Driver
         if objExists("defaultArnoldDriver"):
             half_driver = ls("defaultArnoldDriver", type="aiAOVDriver")[0]
         else:
@@ -155,7 +208,7 @@ class AOVManager(QDialog):
 
         half_driver.exrCompression.set(9)
         half_driver.mergeAOVs.set(1)
-        half_driver.multipart.set(1)
+        half_driver.multipart.set(0 if self.__output_denoising else 1)
         half_driver.halfPrecision.set(1)
 
         if objExists("defaultRenderGlobals"):
@@ -170,7 +223,7 @@ class AOVManager(QDialog):
     # Check if a name is correct for a light group
     @staticmethod
     def __check_name_light_group(name):
-        return re.match(r"^[a-zA-Z][a-zA-Z0-9_]*$", name) is not None
+        return re.match(r"^[a-zA-Z][a-zA-Z0-9_:]*$", name) is not None
 
     # Retrieve all the available aovs and the active ones.
     def __retrieve_aovs(self):
@@ -197,18 +250,18 @@ class AOVManager(QDialog):
             if name in aov_possible_keys:
                 self.__active_aovs.append((aov_name, aov))
 
-        active_aov_name = [re.sub("RGBA_", '', aov[0]) for aov in self.__active_aovs]
+        active_aov_names = [re.sub("RGBA_", '', aov[0]) for aov in self.__active_aovs]
 
         # Available AOVs
         self.__available_aovs = {}
         for aov_name, aov in AOVS.items():
             order_group = aov.get_order_group()
-            if aov_name not in active_aov_name:
+            if aov_name not in active_aov_names:
                 if order_group not in self.__available_aovs:
                     self.__available_aovs[order_group] = []
                 self.__available_aovs[order_group].append((aov_name, aov))
         for aov_name in self.__light_groups:
-            if aov_name not in active_aov_name:
+            if aov_name not in active_aov_names:
                 if LIGHT_GROUP_AOVS_ORDER_GROUP not in self.__available_aovs:
                     self.__available_aovs[LIGHT_GROUP_AOVS_ORDER_GROUP] = []
                 name = "RGBA_" + aov_name
@@ -263,40 +316,46 @@ class AOVManager(QDialog):
 
         # Widget ML.1.1 : Update Drivers
         update_drivers_btn = QPushButton("Update Drivers")
-        update_drivers_btn.clicked.connect(AOVManager.__update_drivers)
+        update_drivers_btn.clicked.connect(self.__update_drivers)
         aovs_lyt.addWidget(update_drivers_btn)
 
-        # Layout ML.1.2 : AOVs
+        # Widget ML.1.2 : Output Denoising
+        output_denoising_cb = QCheckBox("Output Denoising")
+        output_denoising_cb.setChecked(self.__output_denoising)
+        output_denoising_cb.stateChanged.connect(self.__on_output_denoising_changed)
+        aovs_lyt.addWidget(output_denoising_cb,0,Qt.AlignCenter)
+
+        # Layout ML.1.3 : AOVs
         aovs_grid = QGridLayout()
         aovs_grid.setColumnStretch(0, 1)
         aovs_grid.setColumnStretch(1, 1)
         aovs_lyt.addLayout(aovs_grid)
 
-        # Widget ML.1.2.1 : Available AOVs
+        # Widget ML.1.3.1 : Available AOVs
         available_aovs_title = QLabel("Available AOVs")
         available_aovs_title.setAlignment(Qt.AlignCenter)
         aovs_grid.addWidget(available_aovs_title, 0, 0)
-        # Widget ML.1.2.2 : Active AOVs
+        # Widget ML.1.3.2 : Active AOVs
         active_aovs = QLabel("Active AOVs")
         active_aovs.setAlignment(Qt.AlignCenter)
         aovs_grid.addWidget(active_aovs, 0, 1)
 
-        # Widget ML.1.2.3 : List Available AOVs
+        # Widget ML.1.3.3 : List Available AOVs
         self.__ui_list_available_aovs_view = QListWidget()
         self.__ui_list_available_aovs_view.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.__ui_list_available_aovs_view.itemSelectionChanged.connect(self.__on_selection_available_aovs_changed)
         aovs_grid.addWidget(self.__ui_list_available_aovs_view, 1, 0)
-        # Widget ML.1.2.4 : List Active AOVs
+        # Widget ML.1.3.4 : List Active AOVs
         self.__ui_list_active_aovs_view = QListWidget()
         self.__ui_list_active_aovs_view.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.__ui_list_active_aovs_view.itemSelectionChanged.connect(self.__on_selection_active_aovs_changed)
         aovs_grid.addWidget(self.__ui_list_active_aovs_view, 1, 1)
 
-        # Widget ML.1.2.5 : Add AOV to active
+        # Widget ML.1.3.5 : Add AOV to active
         self.__ui_add_aov_to_active_btn = QPushButton(">>>")
         self.__ui_add_aov_to_active_btn.clicked.connect(partial(self.__add_aovs_to_active))
         aovs_grid.addWidget(self.__ui_add_aov_to_active_btn, 2, 0)
-        # Widget ML.1.2.6: Remove AOV from Active
+        # Widget ML.1.3.6: Remove AOV from Active
         self.__ui_remove_aov_to_active_btn = QPushButton("<<<")
         self.__ui_remove_aov_to_active_btn.clicked.connect(self.__remove_selected_aovs_from_active)
         aovs_grid.addWidget(self.__ui_remove_aov_to_active_btn, 2, 1)
@@ -532,12 +591,16 @@ class AOVManager(QDialog):
             self.__active_aovs_selected.append(item.data(Qt.UserRole))
         self.__refresh_aov_btn()
 
+    def __on_output_denoising_changed(self, state):
+        self.__output_denoising = state == 2
+        self.__update_active_aovs()
+
     # Create a new light group or rename a existant one
     def __submit_light_group(self, lights=None, name=None):
         if name is None:
             name = self.__ui_lg_name_edit.text()
 
-        name = name.replace("|","_")
+        name = name.replace("|","_").replace(":","_")
 
         if self.__check_name_light_group(name):
             undoInfo(openChunk=True)
@@ -650,15 +713,13 @@ class AOVManager(QDialog):
             undoInfo(openChunk=True)
             selection_available_aovs = self.__available_aovs_selected
 
-        AOVManager.__update_drivers()
-        full_driver = ls("aov_full_driver", type="aiAOVDriver")[0]
-        half_driver = ls("defaultArnoldDriver", type="aiAOVDriver")[0]
+        self.__update_drivers()
 
         lockNode('initialShadingGroup', lock=False, lu=False)
         lockNode('initialParticleSE', lock=False, lu=False)
 
         for aov in selection_available_aovs:
-            aov.create_aov(half_driver, full_driver)
+            aov.create_aov(self.__output_denoising)
 
         print("# AOVs created")
 
@@ -668,6 +729,24 @@ class AOVManager(QDialog):
         self.__refresh_aov_btn()
         if take_selected:
             undoInfo(closeChunk=True)
+
+    def __update_active_aovs(self):
+        self.__update_drivers()
+
+        lockNode('initialShadingGroup', lock=False, lu=False)
+        lockNode('initialParticleSE', lock=False, lu=False)
+
+        for aov_name, aov in self.__active_aovs:
+            if aov_name in AOVS:
+                aov_obj = AOVS[aov_name]
+            else:
+                aov_obj = LightGroupAOV(aov_name, LIGHT_GROUP_AOVS_ORDER_GROUP)
+            aov_obj.update(aov_name ,self.__output_denoising)
+
+        self.__retrieve_aovs()
+        self.__refresh_active_aovs_list()
+        self.__refresh_available_aovs_list()
+        self.__refresh_aov_btn()
 
     # Remove a set of AOVs from active AOVs
     def __remove_selected_aovs_from_active(self):

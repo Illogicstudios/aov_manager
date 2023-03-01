@@ -6,12 +6,16 @@ if __name__ == '__main__':
     if not sys.path.__contains__(install_dir):
         sys.path.append(install_dir)
 
-    # TODO import and start right tool
-    import AOVManager
-    from AOVManager import *
+    modules = ["AOVManager", "AOVBehavior", "AOV"]
+
     from utils import *
 
-    unload_packages(silent=True, packages=["AOVManager", "AOV"])
+    unload_packages(silent=True, packages=modules)
+
+    for module in modules:
+        importlib.import_module(module)
+
+    from AOVManager import *
 
     try:
         aov_manager.close()
@@ -19,3 +23,4 @@ if __name__ == '__main__':
         pass
     aov_manager = AOVManager()
     aov_manager.show()
+
