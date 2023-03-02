@@ -102,7 +102,8 @@ class AOVManager(QDialog):
         self.__selection_lg = None
         self.__selection_lg_light = None
         # For Aovs Part
-        self.__output_denoising = False
+        self.__output_denoising = ls("defaultArnoldRenderOptions")[0].outputVarianceAOVs.get() \
+            if objExists("defaultArnoldRenderOptions") else False
         self.__active_aovs = []
         self.__available_aovs = {}
         self.__active_aovs_selected = []
@@ -213,6 +214,8 @@ class AOVManager(QDialog):
 
         if objExists("defaultRenderGlobals"):
             ls("defaultRenderGlobals")[0].imageFilePrefix.set("<RenderLayer>/<Scene>/<Scene>")
+        if objExists("defaultArnoldRenderOptions"):
+            ls("defaultArnoldRenderOptions")[0].outputVarianceAOVs.set(self.__output_denoising)
 
     # Get all the lights in the scene
     @staticmethod
