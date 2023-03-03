@@ -31,7 +31,7 @@ class DefaultAOV(AOV):
 
 class CryptomatteAOV(AOV):
     def __init__(self, name, order_group):
-        super().__init__(name, order_group, [FullPrecisionBehavior()])
+        super().__init__(name, order_group, [HalfPrecisionBehavior()])
 
     def create_aov(self, output_denoising):
         super(CryptomatteAOV, self).create_aov(output_denoising)

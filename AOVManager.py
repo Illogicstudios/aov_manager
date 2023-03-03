@@ -198,7 +198,7 @@ class AOVManager(QDialog):
             full_driver = createNode('aiAOVDriver', name="aov_full_driver")
         full_driver.halfPrecision.set(0)
         full_driver.mergeAOVs.set(1)
-        full_driver.multipart.set(1)
+        full_driver.multipart.set(0)
         full_driver.prefix.set("<RenderLayer>/<Scene>/<Scene>_utility")
 
         # Half Driver
@@ -209,7 +209,8 @@ class AOVManager(QDialog):
 
         half_driver.exrCompression.set(9)
         half_driver.mergeAOVs.set(1)
-        half_driver.multipart.set(0 if self.__output_denoising else 1)
+        full_driver.multipart.set(0)
+        # half_driver.multipart.set(0 if self.__output_denoising else 1)
         half_driver.halfPrecision.set(1)
 
         if objExists("defaultRenderGlobals"):
