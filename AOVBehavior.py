@@ -3,8 +3,8 @@ from pymel.core import *
 
 import mtoa.aovs as aovs
 
-# AOV Behaviors
 
+# AOV Behaviors
 class AOVBehavior(ABC):
     @abstractmethod
     def connect_driver_filter(self, aov, output_denoising):
@@ -42,13 +42,13 @@ class AOVVarianceBehavior(AOVBehavior):
         if output_denoising:
             variance_filter = createNode('aiAOVFilter', n="variance_filter")
             setAttr(variance_filter + '.ai_translator', "variance", type="string")
-            connectAttr(variance_driver+".message", driver_field, f=True)
-            connectAttr(variance_filter+".message", filter_field, f=True)
+            connectAttr(variance_driver + ".message", driver_field, f=True)
+            connectAttr(variance_filter + ".message", filter_field, f=True)
         else:
             try:
-                disconnectAttr(variance_driver+".message", driver_field)
+                disconnectAttr(variance_driver + ".message", driver_field)
                 variance_filter = listConnections(filter_field)[0]
-                disconnectAttr(variance_filter+".message", filter_field)
+                disconnectAttr(variance_filter + ".message", filter_field)
                 delete(variance_filter)
             except Exception:
                 pass

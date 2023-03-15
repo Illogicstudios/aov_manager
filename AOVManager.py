@@ -51,6 +51,10 @@ AOVS = {
         "crypto_object", FIRST_AOV_ORDER_GROUP),
     "uv": UVAOV(
         "uv", FIRST_AOV_ORDER_GROUP),
+    "emission_indirect": EmissionIndirectAOV(
+        "emission_indirect", FIRST_AOV_ORDER_GROUP),
+    "emission_osl": EmissionOSLAOV(
+        "emission_osl", FIRST_AOV_ORDER_GROUP),
     "sheen": DefaultAOV(
         "sheen", SECOND_AOV_ORDER_GROUP, [HalfPrecisionBehavior(), AOVVarianceBehavior()]),
     "specular": DefaultAOV(

@@ -3,6 +3,7 @@ from enum import Enum
 import mtoa.aovs as aovs
 from pymel.core import *
 from AOVBehavior import *
+from utils import *
 
 
 class AOV(ABC):
@@ -79,6 +80,24 @@ class MotionVectorBlurAOV(AOV):
         motion_vector_node = createNode("aiMotionVector", n="aiMotionVector")
         motion_vector_node.raw.set(1)
         cmds.connectAttr(motion_vector_node.name() + ".outColor", "aiAOV_" + self._aov.name + ".defaultValue")
+
+
+class EmissionIndirectAOV(AOV):
+    def __init__(self, name, order_group):
+        super().__init__(name, order_group, [HalfPrecisionBehavior()])
+
+    def create_aov(self, output_denoising):
+        super(EmissionIndirectAOV, self).create_aov(output_denoising)
+        setAttr("aiAOV_" + self._aov.name+".lightPathExpression","C<R>.*O")
+
+
+class EmissionOSLAOV(AOV):
+    def __init__(self, name, order_group):
+        super().__init__(name, order_group, [HalfPrecisionBehavior()])
+
+    def create_aov(self, output_denoising):
+        super(EmissionOSLAOV, self).create_aov(output_denoising)
+        setAttr("aiAOV_" + self._aov.name+".lightPathExpression","C<R><O.'customEmit'>")
 
 
 class LightGroupAOV(AOV):
