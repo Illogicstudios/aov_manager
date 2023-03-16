@@ -26,12 +26,12 @@ class FullPrecisionBehavior(AOVBehavior):
 class ClosestGaussianBehavior(AOVBehavior):
     def connect_driver_filter(self, aov_name, output_denoising):
         full_driver = ls("aov_full_driver", type="aiAOVDriver")[0]
-        connectAttr(full_driver.name() + ".message", "aiAOV_" + aov_name + ".outputs[0].driver", f=True)
-        connectAttr(full_driver.name() + ".message", "aiAOV_" + aov_name + ".outputs[1].driver", f=True)
-        connectAttr("defaultArnoldFilter.message", "aiAOV_" + aov_name + '.outputs[0].filter', f=True)
         closest_filter = createNode("aiAOVFilter")
         closest_filter.aiTranslator.set("closest")
-        connectAttr(closest_filter + ".message", "aiAOV_" + aov_name + '.outputs[1].filter', f=True)
+        connectAttr(full_driver.name() + ".message", "aiAOV_" + aov_name + ".outputs[0].driver", f=True)
+        connectAttr(closest_filter + ".message", "aiAOV_" + aov_name + '.outputs[0].filter', f=True)
+        connectAttr(full_driver.name() + ".message", "aiAOV_" + aov_name + ".outputs[1].driver", f=True)
+        connectAttr("defaultArnoldFilter.message", "aiAOV_" + aov_name + '.outputs[1].filter', f=True)
 
 
 class AOVVarianceBehavior(AOVBehavior):
