@@ -67,8 +67,10 @@ AOVS = {
         "coat", SECOND_AOV_ORDER_GROUP, [HalfPrecisionBehavior(), AOVVarianceBehavior()]),
     "occlusion": OcclusionAOV(
         "occlusion", SECOND_AOV_ORDER_GROUP),
-    "motionVectorBlur": MotionVectorBlurAOV(
+    "motionVectorBlur": MotionVectorBlurGaussianAOV(
         "motionVectorBlur", SECOND_AOV_ORDER_GROUP),
+    "motionVectorBlurClosest": MotionVectorBlurClosestAOV(
+        "motionVectorBlurClosest", SECOND_AOV_ORDER_GROUP),
     "direct": DefaultAOV(
         "direct", THIRD_AOV_ORDER_GROUP, [HalfPrecisionBehavior(), AOVVarianceBehavior()]),
     "indirect": DefaultAOV(

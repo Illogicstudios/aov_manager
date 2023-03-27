@@ -71,15 +71,30 @@ class UVAOV(AOV):
 
 
 class MotionVectorBlurAOV(AOV):
-    def __init__(self, name, order_group):
-        super().__init__(name, order_group, [FullPrecisionBehavior()])
+    def __init__(self, name, order_group, aov_behaviors):
+        super().__init__(name, order_group, aov_behaviors)
 
     def create_aov(self, output_denoising):
         super(MotionVectorBlurAOV, self).create_aov(output_denoising)
-
-        motion_vector_node = createNode("aiMotionVector", n="aiMotionVector")
+        motion_vector_node = None
+        if objExists("aiMotionVector"):
+            tmp_aimv = ls("aiMotionVector", type="aiMotionVector")
+            if len(tmp_aimv) > 0:
+                motion_vector_node = tmp_aimv[0]
+        if motion_vector_node is None:
+            motion_vector_node = createNode("aiMotionVector", n="aiMotionVector")
         motion_vector_node.raw.set(1)
         cmds.connectAttr(motion_vector_node.name() + ".outColor", "aiAOV_" + self._aov.name + ".defaultValue")
+
+
+class MotionVectorBlurGaussianAOV(MotionVectorBlurAOV):
+    def __init__(self, name, order_group):
+        super().__init__(name, order_group, [HalfPrecisionBehavior()])
+
+
+class MotionVectorBlurClosestAOV(MotionVectorBlurAOV):
+    def __init__(self, name, order_group):
+        super().__init__(name, order_group, [HalfPrecisionClosestBehavior()])
 
 
 class EmissionIndirectAOV(AOV):
@@ -88,7 +103,7 @@ class EmissionIndirectAOV(AOV):
 
     def create_aov(self, output_denoising):
         super(EmissionIndirectAOV, self).create_aov(output_denoising)
-        setAttr("aiAOV_" + self._aov.name+".lightPathExpression","C<R>.*O")
+        setAttr("aiAOV_" + self._aov.name + ".lightPathExpression", "C<R>.*O")
 
 
 class EmissionOSLAOV(AOV):
@@ -97,7 +112,7 @@ class EmissionOSLAOV(AOV):
 
     def create_aov(self, output_denoising):
         super(EmissionOSLAOV, self).create_aov(output_denoising)
-        setAttr("aiAOV_" + self._aov.name+".lightPathExpression","C<R><O.'customEmit'>")
+        setAttr("aiAOV_" + self._aov.name + ".lightPathExpression", "C<R><O.'customEmit'>")
 
 
 class LightGroupAOV(AOV):
