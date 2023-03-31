@@ -89,12 +89,12 @@ class MotionVectorBlurAOV(AOV):
 
 class MotionVectorBlurGaussianAOV(MotionVectorBlurAOV):
     def __init__(self, name, order_group):
-        super().__init__(name, order_group, [HalfPrecisionBehavior()])
+        super().__init__(name, order_group, [FullPrecisionBehavior()])
 
 
 class MotionVectorBlurClosestAOV(MotionVectorBlurAOV):
     def __init__(self, name, order_group):
-        super().__init__(name, order_group, [HalfPrecisionClosestBehavior()])
+        super().__init__(name, order_group, [FullPrecisionClosestBehavior()])
 
 
 class EmissionIndirectAOV(AOV):
