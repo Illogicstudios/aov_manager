@@ -67,6 +67,8 @@ AOVS = {
         "coat", SECOND_AOV_ORDER_GROUP, [HalfPrecisionBehavior(), AOVVarianceBehavior()]),
     "occlusion": OcclusionAOV(
         "occlusion", SECOND_AOV_ORDER_GROUP),
+    "motionvector": DefaultAOV(
+        "motionvector", SECOND_AOV_ORDER_GROUP, [FullPrecisionClosestBehavior()]),
     "motionVectorBlur": MotionVectorBlurGaussianAOV(
         "motionVectorBlur", SECOND_AOV_ORDER_GROUP),
     "motionVectorBlurClosest": MotionVectorBlurClosestAOV(
