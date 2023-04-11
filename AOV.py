@@ -99,20 +99,20 @@ class MotionVectorBlurClosestAOV(MotionVectorBlurAOV):
 
 class EmissionIndirectAOV(AOV):
     def __init__(self, name, order_group):
-        super().__init__(name, order_group, [HalfPrecisionBehavior()])
+        super().__init__(name, order_group, [HalfPrecisionBehavior(), AOVVarianceBehavior()])
 
     def create_aov(self, output_denoising):
         super(EmissionIndirectAOV, self).create_aov(output_denoising)
-        setAttr("aiAOV_" + self._aov.name + ".lightPathExpression", "C<R>.*O")
+        setAttr("aiAOV_" + self._aov.name + ".lightPathExpression", "C[DSV].*O")
 
 
 class EmissionOSLAOV(AOV):
     def __init__(self, name, order_group):
-        super().__init__(name, order_group, [HalfPrecisionBehavior()])
+        super().__init__(name, order_group, [HalfPrecisionBehavior(), AOVVarianceBehavior()])
 
     def create_aov(self, output_denoising):
         super(EmissionOSLAOV, self).create_aov(output_denoising)
-        setAttr("aiAOV_" + self._aov.name + ".lightPathExpression", "C<R><O.'customEmit'>")
+        setAttr("aiAOV_" + self._aov.name + ".lightPathExpression", "C[DSV].*<O.'customEmit'>")
 
 
 class LightGroupAOV(AOV):
