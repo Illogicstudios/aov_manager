@@ -3,7 +3,7 @@ from functools import partial
 
 import sys
 
-from pymel.core import *
+import pymel.core as pm
 import maya.OpenMayaUI as omui
 
 from PySide2 import QtCore
@@ -110,8 +110,8 @@ class AOVManager(QDialog):
         self.__selection_lg = None
         self.__selection_lg_light = None
         # For Aovs Part
-        self.__output_denoising = ls("defaultArnoldRenderOptions")[0].outputVarianceAOVs.get() \
-            if objExists("defaultArnoldRenderOptions") else False
+        self.__output_denoising = pm.ls("defaultArnoldRenderOptions")[0].outputVarianceAOVs.get() \
+            if pm.objExists("defaultArnoldRenderOptions") else False
         self.__active_aovs = []
         self.__available_aovs = {}
         self.__active_aovs_selected = []
@@ -156,7 +156,7 @@ class AOVManager(QDialog):
             self.__ui_pos = QPoint(pos["x"],pos["y"])
             
     def test_arnold_renderer(self):
-        arnold_renderer_loaded = objExists("defaultArnoldDriver")
+        arnold_renderer_loaded = pm.objExists("defaultArnoldDriver")
         if not arnold_renderer_loaded:
             msg = QMessageBox()
             msg.setWindowTitle("Error AOV Manager with Arnold Renderer")
@@ -191,29 +191,29 @@ class AOVManager(QDialog):
     # Update the properties of the drivers
     def __update_drivers(self):
         # Variance Driver
-        if objExists("variance_driver"):
-            variance_driver = ls("variance_driver", type="aiAOVDriver")[0]
+        if pm.objExists("variance_driver"):
+            variance_driver = pm.ls("variance_driver", type="aiAOVDriver")[0]
         else:
-            variance_driver = createNode('aiAOVDriver', name="variance_driver")
+            variance_driver = pm.createNode('aiAOVDriver', name="variance_driver")
         variance_driver.halfPrecision.set(1)
         variance_driver.mergeAOVs.set(1)
         variance_driver.prefix.set("<RenderLayer>/<Scene>/variance_<Scene>")
 
         # Full Driver
-        if objExists("aov_full_driver"):
-            full_driver = ls("aov_full_driver", type="aiAOVDriver")[0]
+        if pm.objExists("aov_full_driver"):
+            full_driver = pm.ls("aov_full_driver", type="aiAOVDriver")[0]
         else:
-            full_driver = createNode('aiAOVDriver', name="aov_full_driver")
+            full_driver = pm.createNode('aiAOVDriver', name="aov_full_driver")
         full_driver.halfPrecision.set(0)
         full_driver.mergeAOVs.set(1)
         full_driver.multipart.set(1)
         full_driver.prefix.set("<RenderLayer>/<Scene>/<Scene>_utility")
 
         # Half Driver
-        if objExists("defaultArnoldDriver"):
-            half_driver = ls("defaultArnoldDriver", type="aiAOVDriver")[0]
+        if pm.objExists("defaultArnoldDriver"):
+            half_driver = pm.ls("defaultArnoldDriver", type="aiAOVDriver")[0]
         else:
-            half_driver = createNode('aiAOVDriver', name="defaultArnoldDriver")
+            half_driver = pm.createNode('aiAOVDriver', name="defaultArnoldDriver")
 
         half_driver.exrCompression.set(9)
         half_driver.mergeAOVs.set(1)
@@ -221,15 +221,15 @@ class AOVManager(QDialog):
         half_driver.multipart.set(0)
         half_driver.halfPrecision.set(1)
 
-        if objExists("defaultRenderGlobals"):
-            ls("defaultRenderGlobals")[0].imageFilePrefix.set("<RenderLayer>/<Scene>/<Scene>")
-        if objExists("defaultArnoldRenderOptions"):
-            ls("defaultArnoldRenderOptions")[0].outputVarianceAOVs.set(self.__output_denoising)
+        if pm.objExists("defaultRenderGlobals"):
+            pm.ls("defaultRenderGlobals")[0].imageFilePrefix.set("<RenderLayer>/<Scene>/<Scene>")
+        if pm.objExists("defaultArnoldRenderOptions"):
+            pm.ls("defaultArnoldRenderOptions")[0].outputVarianceAOVs.set(self.__output_denoising)
 
     # Get all the lights in the scene
     @staticmethod
     def __get_all_lights():
-        return [light for light in ls(type=["light"] + listNodeTypes("light"), dag=True) if
+        return [light for light in pm.ls(type=["light"] + pm.listNodeTypes("light"), dag=True) if
                 light.type() not in ["aiLightDecay","aiGobo","aiLightBlocker","lightEditor","lightItem"]]
 
     # Check if a name is correct for a light group
@@ -242,7 +242,7 @@ class AOVManager(QDialog):
         aov_possible_keys = list(AOVS.keys()) + \
                             [aov for aov in list(self.__light_groups)]
 
-        unfiltered_active_aovs = [(re.sub("aiAOV_", '', aov.name()), aov) for aov in ls(type="aiAOV")]
+        unfiltered_active_aovs = [(re.sub("aiAOV_", '', aov.name()), aov) for aov in pm.ls(type="aiAOV")]
 
         # Active AOVs
         self.__active_aovs = []
@@ -256,7 +256,7 @@ class AOVManager(QDialog):
                         found = True
                         break
                 if not found:
-                    delete(aov)
+                    pm.delete(aov)
                     self.__retrieve_aovs()
                     return
             if name in aov_possible_keys:
@@ -615,7 +615,7 @@ class AOVManager(QDialog):
         name = name.replace("|","_").replace(":","_")
 
         if self.__check_name_light_group(name):
-            undoInfo(openChunk=True)
+            pm.undoInfo(openChunk=True)
             if self.__selection_lg is not None and self.__selection_lg_light is None:
                 lights = self.__get_all_lights()
                 for light in lights:
@@ -624,8 +624,8 @@ class AOVManager(QDialog):
 
                 name_lg = "aiAOV_RGBA_" + self.__selection_lg
 
-                if objExists(name_lg):
-                    delete(ls(name_lg)[0])
+                if pm.objExists(name_lg):
+                    pm.delete(ls(name_lg)[0])
                     name_aov = "RGBA_" + name
                     self.__add_aovs_to_active([LightGroupAOV(name_aov, LIGHT_GROUP_AOVS_ORDER_GROUP)])
             else:
@@ -651,20 +651,20 @@ class AOVManager(QDialog):
             self.__refresh_available_aovs_list()
             self.__refresh_active_aovs_list()
             self.__refresh_lg_btn()
-            undoInfo(closeChunk=True)
+            pm.undoInfo(closeChunk=True)
 
     # Create a light group by light
     def __create_light_group_by_light(self):
-        undoInfo(openChunk=True)
+        pm.undoInfo(openChunk=True)
         lights = self.__lights_selected
         for light in lights:
             light = light.getTransform()
             self.__submit_light_group([light], light.name())
-        undoInfo(closeChunk=True)
+        pm.undoInfo(closeChunk=True)
 
     # Update all lights to remove all light groups
     def __remove_all_light_groups(self):
-        undoInfo(openChunk=True)
+        pm.undoInfo(openChunk=True)
         lights = self.__get_all_lights()
         for light in lights:
             light.aiAov.set("default")
@@ -675,11 +675,11 @@ class AOVManager(QDialog):
         self.__refresh_available_aovs_list()
         self.__refresh_active_aovs_list()
         self.__refresh_lg_btn()
-        undoInfo(closeChunk=True)
+        pm.undoInfo(closeChunk=True)
 
     # Add a set of lights in a light group (default : selected)
     def __add_lights_to_light_group(self, lights=None, light_group=None):
-        undoInfo(openChunk=True)
+        pm.undoInfo(openChunk=True)
         if lights is None:
             lights = self.__lights_selected
 
@@ -697,11 +697,11 @@ class AOVManager(QDialog):
         self.__refresh_lights_list()
         self.__refresh_available_aovs_list()
         self.__refresh_lg_btn()
-        undoInfo(closeChunk=True)
+        pm.undoInfo(closeChunk=True)
 
     # Remove a light from a light group or delete a light group
     def __remove_selection_lg(self):
-        undoInfo(openChunk=True)
+        pm.undoInfo(openChunk=True)
         if self.__selection_lg_light is not None:
             self.__selection_lg_light.aiAov.set("default")
         elif self.__selection_lg is not None:
@@ -716,19 +716,19 @@ class AOVManager(QDialog):
         self.__refresh_available_aovs_list()
         self.__refresh_active_aovs_list()
         self.__refresh_lg_btn()
-        undoInfo(closeChunk=True)
+        pm.undoInfo(closeChunk=True)
 
     # Add a set of available AOVs to active AOVs
     def __add_aovs_to_active(self, selection_available_aovs=None):
         take_selected = selection_available_aovs is None
         if take_selected:
-            undoInfo(openChunk=True)
+            pm.undoInfo(openChunk=True)
             selection_available_aovs = self.__available_aovs_selected
 
         self.__update_drivers()
 
-        lockNode('initialShadingGroup', lock=False, lu=False)
-        lockNode('initialParticleSE', lock=False, lu=False)
+        pm.lockNode('initialShadingGroup', lock=False, lu=False)
+        pm.lockNode('initialParticleSE', lock=False, lu=False)
 
         for aov in selection_available_aovs:
             aov.create_aov(self.__output_denoising)
@@ -740,13 +740,13 @@ class AOVManager(QDialog):
         self.__refresh_available_aovs_list()
         self.__refresh_aov_btn()
         if take_selected:
-            undoInfo(closeChunk=True)
+            pm.undoInfo(closeChunk=True)
 
     def __update_active_aovs(self):
         self.__update_drivers()
 
-        lockNode('initialShadingGroup', lock=False, lu=False)
-        lockNode('initialParticleSE', lock=False, lu=False)
+        pm.lockNode('initialShadingGroup', lock=False, lu=False)
+        pm.lockNode('initialParticleSE', lock=False, lu=False)
 
         for aov_name, aov in self.__active_aovs:
             if aov_name in AOVS:
@@ -762,11 +762,11 @@ class AOVManager(QDialog):
 
     # Remove a set of AOVs from active AOVs
     def __remove_selected_aovs_from_active(self):
-        undoInfo(openChunk=True)
-        delete(self.__active_aovs_selected)
+        pm.undoInfo(openChunk=True)
+        pm.delete(self.__active_aovs_selected)
         self.__active_aovs_selected = []
         self.__retrieve_aovs()
         self.__refresh_active_aovs_list()
         self.__refresh_available_aovs_list()
         self.__refresh_aov_btn()
-        undoInfo(closeChunk=True)
+        pm.undoInfo(closeChunk=True)

@@ -1,7 +1,7 @@
 from abc import *
 from enum import Enum
 import mtoa.aovs as aovs
-from pymel.core import *
+import pymel.core as pm
 from AOVBehavior import *
 from utils import *
 
@@ -37,12 +37,12 @@ class CryptomatteAOV(AOV):
     def create_aov(self, output_denoising):
         super(CryptomatteAOV, self).create_aov(output_denoising)
 
-        if objExists('aov_cryptomatte'):
-            crypto_node = ls("aov_cryptomatte", type="cryptomatte")[0]
+        if pm.objExists('aov_cryptomatte'):
+            crypto_node = pm.ls("aov_cryptomatte", type="cryptomatte")[0]
         else:
-            crypto_node = createNode("cryptomatte", n="aov_cryptomatte")
+            crypto_node = pm.createNode("cryptomatte", n="aov_cryptomatte")
 
-        cmds.connectAttr(crypto_node.name() + ".outColor", "aiAOV_" + self._aov.name + ".defaultValue")
+        pm.connectAttr(crypto_node.name() + ".outColor", "aiAOV_" + self._aov.name + ".defaultValue")
 
 
 class OcclusionAOV(AOV):
@@ -52,9 +52,9 @@ class OcclusionAOV(AOV):
     def create_aov(self, output_denoising):
         super(OcclusionAOV, self).create_aov(output_denoising)
 
-        occlusion_node = createNode("aiAmbientOcclusion", n="occMtl")
+        occlusion_node = pm.createNode("aiAmbientOcclusion", n="occMtl")
         occlusion_node.falloff.set(0)
-        cmds.connectAttr(occlusion_node.name() + ".outColor", "aiAOV_" + self._aov.name + ".defaultValue")
+        pm.connectAttr(occlusion_node.name() + ".outColor", "aiAOV_" + self._aov.name + ".defaultValue")
 
 
 class UVAOV(AOV):
@@ -64,10 +64,10 @@ class UVAOV(AOV):
     def create_aov(self, output_denoising):
         super(UVAOV, self).create_aov(output_denoising)
 
-        uv_node = createNode("aiUtility", n="aiUtiliy_uv")
+        uv_node = pm.createNode("aiUtility", n="aiUtiliy_uv")
         uv_node.shadeMode.set(2)
         uv_node.colorMode.set(5)
-        cmds.connectAttr(uv_node.name() + ".outColor", "aiAOV_" + self._aov.name + ".defaultValue")
+        pm.connectAttr(uv_node.name() + ".outColor", "aiAOV_" + self._aov.name + ".defaultValue")
 
 
 class MotionVectorBlurAOV(AOV):
@@ -77,14 +77,14 @@ class MotionVectorBlurAOV(AOV):
     def create_aov(self, output_denoising):
         super(MotionVectorBlurAOV, self).create_aov(output_denoising)
         motion_vector_node = None
-        if objExists("aiMotionVector"):
-            tmp_aimv = ls("aiMotionVector", type="aiMotionVector")
+        if pm.objExists("aiMotionVector"):
+            tmp_aimv = pm.ls("aiMotionVector", type="aiMotionVector")
             if len(tmp_aimv) > 0:
                 motion_vector_node = tmp_aimv[0]
         if motion_vector_node is None:
-            motion_vector_node = createNode("aiMotionVector", n="aiMotionVector")
+            motion_vector_node = pm.createNode("aiMotionVector", n="aiMotionVector")
         motion_vector_node.raw.set(1)
-        cmds.connectAttr(motion_vector_node.name() + ".outColor", "aiAOV_" + self._aov.name + ".defaultValue")
+        pm.connectAttr(motion_vector_node.name() + ".outColor", "aiAOV_" + self._aov.name + ".defaultValue")
 
 
 class MotionVectorBlurGaussianAOV(MotionVectorBlurAOV):
@@ -103,7 +103,7 @@ class EmissionIndirectAOV(AOV):
 
     def create_aov(self, output_denoising):
         super(EmissionIndirectAOV, self).create_aov(output_denoising)
-        setAttr("aiAOV_" + self._aov.name + ".lightPathExpression", "C[DSV].*O")
+        pm.setAttr("aiAOV_" + self._aov.name + ".lightPathExpression", "C[DSV].*O")
 
 
 class EmissionOSLAOV(AOV):
@@ -112,7 +112,7 @@ class EmissionOSLAOV(AOV):
 
     def create_aov(self, output_denoising):
         super(EmissionOSLAOV, self).create_aov(output_denoising)
-        setAttr("aiAOV_" + self._aov.name + ".lightPathExpression", "C[DSV].*<O.'customEmit'>")
+        pm.setAttr("aiAOV_" + self._aov.name + ".lightPathExpression", "C[DSV].*<O.'customEmit'>")
 
 
 class LightGroupAOV(AOV):
