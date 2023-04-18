@@ -1,4 +1,5 @@
 import os
+import re
 from functools import partial
 
 import sys
