@@ -16,13 +16,13 @@ from PySide2.QtCore import *
 
 from shiboken2 import wrapInstance
 
-from utils import *
+from common.utils import *
 
 import maya.OpenMaya as OpenMaya
 
-from AOV import *
-from AOVBehavior import *
-from Prefs import *
+from .AOV import *
+from .AOVBehavior import *
+from common.Prefs import *
 
 ########################################################################################################################
 

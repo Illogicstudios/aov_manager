@@ -2,8 +2,8 @@ from abc import *
 from enum import Enum
 import mtoa.aovs as aovs
 import pymel.core as pm
-from AOVBehavior import *
-from utils import *
+from .AOVBehavior import *
+from common.utils import *
 
 
 class AOV(ABC):
