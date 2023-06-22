@@ -142,21 +142,30 @@ class AOVManager(QDialog):
         else:
             self.close()
 
-
-    # Save preferences
     def __save_prefs(self):
+        """
+        Save preferences
+        :return:
+        """
         size = self.size()
         self.__prefs["window_size"] = {"width": size.width(), "height": size.height()}
         pos = self.pos()
         self.__prefs["window_pos"] = {"x": pos.x(), "y": pos.y()}
 
-    # Retrieve preferences
     def __retrieve_prefs(self):
+        """
+        Retrieve preferences
+        :return:
+        """
         if "window_pos" in self.__prefs:
             pos = self.__prefs["window_pos"]
             self.__ui_pos = QPoint(pos["x"],pos["y"])
             
     def test_arnold_renderer(self):
+        """
+        Test if Arnold is loaded and display an error message if not
+        :return: arnold_renderer_loaded
+        """
         arnold_renderer_loaded = pm.objExists("defaultArnoldDriver")
         if not arnold_renderer_loaded:
             msg = QMessageBox()
@@ -168,29 +177,37 @@ class AOVManager(QDialog):
             msg.exec_()
         return arnold_renderer_loaded
 
-    # Create callbacks when DAG changes and the selection changes
     def __create_callback(self):
+        """
+        Create callbacks when DAG changes and the selection changes
+        :return:
+        """
         self.__selection_callback = \
             OpenMaya.MEventMessage.addEventCallback("SelectionChanged", self.__on_selection_changed)
         self.__dag_callback = \
             OpenMaya.MEventMessage.addEventCallback("DagObjectCreated", self.__on_dag_changed)
 
-    # Create callbacks when DAG changes and the selection changes
     def __remove_callback(self):
+        """
+        Create callbacks when DAG changes and the selection changes
+        :return:
+        """
         OpenMaya.MMessage.removeCallback(self.__selection_callback)
         OpenMaya.MMessage.removeCallback(self.__dag_callback)
 
-    # Add callback
-    # def showEvent(self, arg__1: QtGui.QShowEvent) -> None:
-    #     self.__create_callback()
-
-    # Remove callbacks
     def hideEvent(self, arg__1: QtGui.QCloseEvent) -> None:
+        """
+        Remove callbacks
+        :return:
+        """
         self.__remove_callback()
         self.__save_prefs()
 
-    # Update the properties of the drivers
     def __update_drivers(self):
+        """
+        Update the properties of the drivers
+        :return:
+        """
         # Variance Driver
         if pm.objExists("variance_driver"):
             variance_driver = pm.ls("variance_driver", type="aiAOVDriver")[0]
@@ -227,19 +244,29 @@ class AOVManager(QDialog):
         if pm.objExists("defaultArnoldRenderOptions"):
             pm.ls("defaultArnoldRenderOptions")[0].outputVarianceAOVs.set(self.__output_denoising)
 
-    # Get all the lights in the scene
     @staticmethod
     def __get_all_lights():
+        """
+        Get all the lights in the scene
+        :return: lights
+        """
         return [light for light in pm.ls(type=["light"] + pm.listNodeTypes("light"), dag=True) if
                 light.type() not in ["aiLightDecay","aiGobo","aiLightBlocker","lightEditor","lightItem"]]
 
-    # Check if a name is correct for a light group
     @staticmethod
     def __check_name_light_group(name):
+        """
+        Check if a name is correct for a light group
+        :param name
+        :return: name_correct
+        """
         return re.match(r"^[a-zA-Z][a-zA-Z0-9_:]*$", name) is not None
 
-    # Retrieve all the available aovs and the active ones.
     def __retrieve_aovs(self):
+        """
+        Retrieve all the available aovs and the active ones.
+        :return:
+        """
         aov_possible_keys = list(AOVS.keys()) + \
                             [aov for aov in list(self.__light_groups)]
 
@@ -281,8 +308,11 @@ class AOVManager(QDialog):
                 self.__available_aovs[LIGHT_GROUP_AOVS_ORDER_GROUP].append(
                     (name, LightGroupAOV(name, LIGHT_GROUP_AOVS_ORDER_GROUP)))
 
-    # Retrieve all the light groups in the scene (!="default")
     def __retrieve_light_groups(self):
+        """
+        Retrieve all the light groups in the scene (!="default")
+        :return:
+        """
         lights = AOVManager.__get_all_lights()
         self.__light_groups = {}
         for light in lights:
@@ -292,9 +322,11 @@ class AOVManager(QDialog):
                     self.__light_groups[aov_light_group] = []
                 self.__light_groups[aov_light_group].append(light)
 
-
-    # Create the ui
     def __create_ui(self):
+        """
+        Create the ui
+        :return:
+        """
         # Reinit attributes of the UI
         self.setMinimumSize(self.__ui_min_width, self.__ui_min_height)
         self.resize(self.__ui_width, self.__ui_height)
@@ -433,8 +465,11 @@ class AOVManager(QDialog):
         self.__ui_remove_all_lg_btn.clicked.connect(self.__remove_all_light_groups)
         lights_lyt.addWidget(self.__ui_remove_all_lg_btn, 3, 1)
 
-    # Refresh the ui according to the model attribute
     def __refresh_ui(self):
+        """
+        Refresh the ui according to the model attribute
+        :return:
+        """
         # Light groups
         self.__retrieve_light_groups()
         self.__refresh_lights_list()
@@ -447,8 +482,11 @@ class AOVManager(QDialog):
         self.__refresh_available_aovs_list()
         self.__refresh_aov_btn()
 
-    # Refresh the list of lights in UI
     def __refresh_lights_list(self):
+        """
+        Refresh the list of lights in UI
+        :return:
+        """
         self.__ui_light_list_view.clear()
         lights = self.__get_all_lights()
         for light in lights:
@@ -459,8 +497,11 @@ class AOVManager(QDialog):
                 item.setData(Qt.UserRole, transform)
                 self.__ui_light_list_view.addItem(item)
 
-    # Refresh the tree list of light groups in UI
     def __refresh_light_group_list(self):
+        """
+        Refresh the tree list of light groups in UI
+        :return:
+        """
         tmp_selection_lg = self.__selection_lg
         tmp_selection_lg_light = self.__selection_lg_light
 
@@ -478,8 +519,11 @@ class AOVManager(QDialog):
         self.__selection_lg = tmp_selection_lg
         self.__selection_lg_light = tmp_selection_lg_light
 
-    # Refresh the name of light group to be created or renamed
     def __refresh_light_group_name(self):
+        """
+        Refresh the name of light group to be created or renamed
+        :return:
+        """
         rename_lg = False
         if self.__selection_lg is not None and self.__selection_lg_light is None:
             lights = self.__get_all_lights()
@@ -501,8 +545,11 @@ class AOVManager(QDialog):
                 else:
                     self.__ui_lg_name_edit.setText("")
 
-    # Refresh the list of active AOVs in UI
     def __refresh_active_aovs_list(self):
+        """
+        Refresh the list of active AOVs in UI
+        :return:
+        """
         self.__ui_list_active_aovs_view.clear()
         aovs = self.__active_aovs
         for aov_name, aov in aovs:
@@ -511,8 +558,11 @@ class AOVManager(QDialog):
             item.setData(Qt.UserRole, aov)
             self.__ui_list_active_aovs_view.addItem(item)
 
-    # Refresh the list of available AOVs in UI
     def __refresh_available_aovs_list(self):
+        """
+        Refresh the list of available AOVs in UI
+        :return:
+        """
         self.__ui_list_available_aovs_view.clear()
         available_aovs = sorted(self.__available_aovs.items(), reverse=True)
         first = True
@@ -532,8 +582,11 @@ class AOVManager(QDialog):
                 self.__ui_list_available_aovs_view.addItem(item)
             first = False
 
-    # Refresh the buttons
     def __refresh_lg_btn(self):
+        """
+        Refresh the buttons
+        :return:
+        """
         self.__ui_lg_submit_btn.setEnabled(
             self.__check_name_light_group(self.__ui_lg_name_edit.text()) and
             ((self.__selection_lg is not None and self.__selection_lg_light is None) or
@@ -547,34 +600,52 @@ class AOVManager(QDialog):
             self.__selection_lg_light is not None or self.__selection_lg is not None)
         self.__ui_remove_all_lg_btn.setEnabled(len(self.__light_groups) > 0)
 
-    # Refresh the button in UI
     def __refresh_aov_btn(self):
+        """
+         Refresh the button in UI
+        :return:
+        """
         self.__ui_add_aov_to_active_btn.setEnabled(len(self.__available_aovs_selected) > 0)
         self.__ui_remove_aov_to_active_btn.setEnabled(len(self.__active_aovs_selected) > 0)
 
-    # Refresh the UI on selection changed
     def __on_selection_changed(self, *args, **kwargs):
+        """
+        Refresh the UI on selection changed
+        :return:
+        """
         self.__refresh_ui()
 
-    # Refresh the UI on dag changed
     def __on_dag_changed(self, *args, **kwargs):
+        """
+        Refresh the UI on dag changed
+        :return:
+        """
         self.__refresh_ui()
 
-    # Update the selected lights
     def __on_light_selection_changed(self):
+        """
+        Update the selected lights
+        :return:
+        """
         self.__lights_selected = []
         for item in self.__ui_light_list_view.selectedItems():
             self.__lights_selected.append(item.data(Qt.UserRole))
         self.__refresh_light_group_name()
         self.__refresh_lg_btn()
 
-    # On Name of light group to be created or updated changed
     def __on_light_group_name_changed(self):
+        """
+        On Name of light group to be created or updated changed
+        :return:
+        """
         self.__name_light_group_default = False
         self.__refresh_lg_btn()
 
-    # Update the selected light groups or lights of light groups
     def __on_selection_lg_changed(self):
+        """
+        Update the selected light groups or lights of light groups
+        :return:
+        """
         item = self.__ui_lg_tree_widget.currentItem()
         if item is not None:
             selection = item.data(0, Qt.UserRole)
@@ -590,26 +661,42 @@ class AOVManager(QDialog):
         self.__refresh_light_group_name()
         self.__refresh_lg_btn()
 
-    # Update the available AOVs selected
     def __on_selection_available_aovs_changed(self):
+        """
+        Update the available AOVs selected
+        :return:
+        """
         self.__available_aovs_selected = []
         for item in self.__ui_list_available_aovs_view.selectedItems():
             self.__available_aovs_selected.append(item.data(Qt.UserRole))
         self.__refresh_aov_btn()
 
-    # Update the active AOVs selected
     def __on_selection_active_aovs_changed(self):
+        """
+        Update the active AOVs selected
+        :return:
+        """
         self.__active_aovs_selected = []
         for item in self.__ui_list_active_aovs_view.selectedItems():
             self.__active_aovs_selected.append(item.data(Qt.UserRole))
         self.__refresh_aov_btn()
 
     def __on_output_denoising_changed(self, state):
+        """
+        On output denoising changed get the value and update aovs
+        :param state
+        :return:
+        """
         self.__output_denoising = state == 2
         self.__update_active_aovs()
 
-    # Create a new light group or rename a existant one
     def __submit_light_group(self, lights=None, name=None):
+        """
+        Create a new light group or rename a existent one
+        :param lights
+        :param name
+        :return:
+        """
         if name is None:
             name = self.__ui_lg_name_edit.text()
 
@@ -654,8 +741,11 @@ class AOVManager(QDialog):
             self.__refresh_lg_btn()
             pm.undoInfo(closeChunk=True)
 
-    # Create a light group by light
     def __create_light_group_by_light(self):
+        """
+        Create a light group by light
+        :return:
+        """
         pm.undoInfo(openChunk=True)
         lights = self.__lights_selected
         for light in lights:
@@ -663,8 +753,11 @@ class AOVManager(QDialog):
             self.__submit_light_group([light], light.name())
         pm.undoInfo(closeChunk=True)
 
-    # Update all lights to remove all light groups
     def __remove_all_light_groups(self):
+        """
+        Update all lights to remove all light groups
+        :return:
+        """
         pm.undoInfo(openChunk=True)
         lights = self.__get_all_lights()
         for light in lights:
@@ -678,8 +771,13 @@ class AOVManager(QDialog):
         self.__refresh_lg_btn()
         pm.undoInfo(closeChunk=True)
 
-    # Add a set of lights in a light group (default : selected)
     def __add_lights_to_light_group(self, lights=None, light_group=None):
+        """
+        Add a set of lights in a light group (default : selected)
+        :param lights
+        :param light_group
+        :return:
+        """
         pm.undoInfo(openChunk=True)
         if lights is None:
             lights = self.__lights_selected
@@ -700,8 +798,11 @@ class AOVManager(QDialog):
         self.__refresh_lg_btn()
         pm.undoInfo(closeChunk=True)
 
-    # Remove a light from a light group or delete a light group
     def __remove_selection_lg(self):
+        """
+        Remove a light from a light group or delete a light group
+        :return:
+        """
         pm.undoInfo(openChunk=True)
         if self.__selection_lg_light is not None:
             self.__selection_lg_light.aiAov.set("default")
@@ -719,8 +820,12 @@ class AOVManager(QDialog):
         self.__refresh_lg_btn()
         pm.undoInfo(closeChunk=True)
 
-    # Add a set of available AOVs to active AOVs
     def __add_aovs_to_active(self, selection_available_aovs=None):
+        """
+        Add a set of available AOVs to active AOVs
+        :param selection_available_aovs
+        :return:
+        """
         take_selected = selection_available_aovs is None
         if take_selected:
             pm.undoInfo(openChunk=True)
@@ -744,6 +849,10 @@ class AOVManager(QDialog):
             pm.undoInfo(closeChunk=True)
 
     def __update_active_aovs(self):
+        """
+        Update active AOVs
+        :return:
+        """
         self.__update_drivers()
 
         pm.lockNode('initialShadingGroup', lock=False, lu=False)
@@ -761,8 +870,11 @@ class AOVManager(QDialog):
         self.__refresh_available_aovs_list()
         self.__refresh_aov_btn()
 
-    # Remove a set of AOVs from active AOVs
     def __remove_selected_aovs_from_active(self):
+        """
+        Remove a set of AOVs from active AOVs
+        :return:
+        """
         pm.undoInfo(openChunk=True)
         pm.delete(self.__active_aovs_selected)
         self.__active_aovs_selected = []

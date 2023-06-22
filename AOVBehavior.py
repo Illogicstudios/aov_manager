@@ -4,10 +4,18 @@ import pymel.core as pm
 import mtoa.aovs as aovs
 
 
-# AOV Behaviors
 class AOVBehavior(ABC):
+    """
+    AOV Behaviors
+    """
     @abstractmethod
     def connect_driver_filter(self, aov, output_denoising):
+        """
+        Connect the right driver and the right filter
+        :param aov
+        :param output_denoising
+        :return:
+        """
         pass
 
 

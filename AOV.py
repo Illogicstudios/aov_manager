@@ -8,20 +8,41 @@ from common.utils import *
 
 class AOV(ABC):
     def __init__(self, name, order_group, aov_behaviors):
+        """
+        Constructor
+        :param name:
+        :param order_group:
+        :param aov_behaviors:
+        """
         self.__name = name
         self.__order_group = order_group
         self.__aov_behaviors = aov_behaviors
         self._aov = None
 
     def get_order_group(self):
+        """
+        Getter of the order group
+        :return: order_group
+        """
         return self.__order_group
 
     def create_aov(self, output_denoising):
+        """
+        Create the AOV
+        :param output_denoising
+        :return:
+        """
         self._aov = aovs.AOVInterface().addAOV(self.__name)
         for aov_behavior in self.__aov_behaviors:
             aov_behavior.connect_driver_filter(self._aov.name, output_denoising)
 
     def update(self, aov_name, output_denoising):
+        """
+        Update the aov by connecting the right driver and filter
+        :param aov_name
+        :param output_denoising
+        :return:
+        """
         for aov_behavior in self.__aov_behaviors:
             aov_behavior.connect_driver_filter(aov_name, output_denoising)
 
