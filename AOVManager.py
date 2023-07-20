@@ -276,7 +276,7 @@ class AOVManager(QDialog):
         self.__active_aovs = []
         for aov_name, aov in unfiltered_active_aovs:
             name = re.sub("RGBA_", '', aov_name)
-            if "RGBA_" in aov_name:
+            if aov_name.startswith("RGBA_"):
                 light_lg = self.__get_all_lights()
                 found = False
                 for light in light_lg:
@@ -285,8 +285,6 @@ class AOVManager(QDialog):
                         break
                 if not found:
                     pm.delete(aov)
-                    self.__retrieve_aovs()
-                    return
             if name in aov_possible_keys:
                 self.__active_aovs.append((aov_name, aov))
 
