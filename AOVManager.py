@@ -113,6 +113,7 @@ class AOVManager(QDialog):
         # For Aovs Part
         self.__output_denoising = pm.ls("defaultArnoldRenderOptions")[0].outputVarianceAOVs.get() \
             if pm.objExists("defaultArnoldRenderOptions") else False
+        self.__mono_driver = False
         self.__active_aovs = []
         self.__available_aovs = {}
         self.__active_aovs_selected = []
@@ -237,7 +238,7 @@ class AOVManager(QDialog):
         half_driver.mergeAOVs.set(1)
         full_driver.multipart.set(0)
         half_driver.multipart.set(0)
-        half_driver.halfPrecision.set(1)
+        half_driver.halfPrecision.set(0 if self.__mono_driver else 1)
 
         if pm.objExists("defaultRenderGlobals"):
             pm.ls("defaultRenderGlobals")[0].imageFilePrefix.set("<RenderLayer>/<Scene>/<Scene>")
@@ -362,11 +363,22 @@ class AOVManager(QDialog):
         update_drivers_btn.clicked.connect(self.__update_drivers)
         aovs_lyt.addWidget(update_drivers_btn)
 
-        # Widget ML.1.2 : Output Denoising
+        # Layout ML.1.2 :
+        lyt_cb = QHBoxLayout()
+        lyt_cb.setAlignment(Qt.AlignCenter)
+        aovs_lyt.addLayout(lyt_cb)
+
+        # Widget ML.1.2.1 : Output Denoising
         output_denoising_cb = QCheckBox("Output Denoising")
         output_denoising_cb.setChecked(self.__output_denoising)
         output_denoising_cb.stateChanged.connect(self.__on_output_denoising_changed)
-        aovs_lyt.addWidget(output_denoising_cb,0,Qt.AlignCenter)
+        lyt_cb.addWidget(output_denoising_cb)
+
+        # Widget ML.1.2.2 : Output Denoising
+        mono_driver_cb = QCheckBox("Mono Driver")
+        mono_driver_cb.setChecked(self.__mono_driver)
+        mono_driver_cb.stateChanged.connect(self.__on_mono_driver_changed)
+        lyt_cb.addWidget(mono_driver_cb)
 
         # Layout ML.1.3 : AOVs
         aovs_grid = QGridLayout()
@@ -688,6 +700,14 @@ class AOVManager(QDialog):
         self.__output_denoising = state == 2
         self.__update_active_aovs()
 
+    def __on_mono_driver_changed(self, state):
+        """
+        On mono driver changed get the value and update the mono driver value
+        :param state
+        :return:
+        """
+        self.__mono_driver = state == 2
+
     def __submit_light_group(self, lights=None, name=None):
         """
         Create a new light group or rename a existent one
@@ -835,7 +855,7 @@ class AOVManager(QDialog):
         pm.lockNode('initialParticleSE', lock=False, lu=False)
 
         for aov in selection_available_aovs:
-            aov.create_aov(self.__output_denoising)
+            aov.create_aov(self.__output_denoising, self.__mono_driver)
 
         print("# AOVs created")
 
@@ -861,7 +881,7 @@ class AOVManager(QDialog):
                 aov_obj = AOVS[aov_name]
             else:
                 aov_obj = LightGroupAOV(aov_name, LIGHT_GROUP_AOVS_ORDER_GROUP)
-            aov_obj.update(aov_name ,self.__output_denoising)
+            aov_obj.update(aov_name ,self.__output_denoising, self.__mono_driver)
 
         self.__retrieve_aovs()
         self.__refresh_active_aovs_list()
