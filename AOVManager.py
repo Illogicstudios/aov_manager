@@ -707,6 +707,7 @@ class AOVManager(QDialog):
         :return:
         """
         self.__mono_driver = state == 2
+        self.__update_active_aovs()
 
     def __submit_light_group(self, lights=None, name=None):
         """
