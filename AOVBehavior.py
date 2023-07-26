@@ -78,7 +78,7 @@ class AOVVarianceBehavior(AOVBehavior):
             driver = pm.ls("variance_driver", type="aiAOVDriver")[0]
         driver_field = "aiAOV_" + aov_name + ".outputs[1].driver"
         filter_field = "aiAOV_" + aov_name + ".outputs[1].filter"
-        if output_denoising:
+        if output_denoising and not mono_driver:
             variance_filter = pm.createNode('aiAOVFilter', n="variance_filter")
             pm.setAttr(variance_filter + '.ai_translator', "variance", type="string")
             pm.connectAttr(driver + ".message", driver_field, f=True)
