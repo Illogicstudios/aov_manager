@@ -72,10 +72,7 @@ class ClosestGaussianBehavior(AOVBehavior):
 
 class AOVVarianceBehavior(AOVBehavior):
     def connect_driver_filter(self, aov_name, output_denoising, mono_driver):
-        if mono_driver:
-            driver = pm.ls("defaultArnoldDriver", type="aiAOVDriver")[0]
-        else:
-            driver = pm.ls("variance_driver", type="aiAOVDriver")[0]
+        driver = pm.ls("variance_driver", type="aiAOVDriver")[0]
         driver_field = "aiAOV_" + aov_name + ".outputs[1].driver"
         filter_field = "aiAOV_" + aov_name + ".outputs[1].filter"
         if output_denoising and not mono_driver:
